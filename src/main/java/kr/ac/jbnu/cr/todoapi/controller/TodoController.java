@@ -102,14 +102,14 @@ public class TodoController {
         String requestId = UUID.randomUUID().toString();
 
         if (requests == null || requests.isEmpty()) {
-            ErrorResponse error = new ErrorResponse(
-                    "https://api.example.com/problems/validation-error",
-                    "Invalid Request",
-                    400,
-                    "Request body must contain at least one todo.",
-                    null,
-                    requestId
-            );
+            ErrorResponse error = ErrorResponse.builder()
+                    .type("about:blank")
+                    .title("Invalid Request")
+                    .status(400)
+                    .detail("Request body must contain at least one todo.")
+                    .instance("/todos/batch")
+                    .requestId(requestId)
+                    .build();
             return ResponseEntity.badRequest().body(error);
         }
 
@@ -135,14 +135,14 @@ public class TodoController {
         String requestId = UUID.randomUUID().toString();
 
         if (!todoService.existsById(id)) {
-            ErrorResponse error = new ErrorResponse(
-                    "https://api.example.com/problems/not-found",
-                    "Not Found",
-                    404,
-                    "Todo with id " + id + " not found.",
-                    null,
-                    requestId
-            );
+            ErrorResponse error = ErrorResponse.builder()
+                    .type("about:blank")
+                    .title("Not Found")
+                    .status(404)
+                    .detail("Todo with id " + id + " not found.")
+                    .instance("/todos/" + id)
+                    .requestId(requestId)
+                    .build();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
 
@@ -163,26 +163,26 @@ public class TodoController {
         String requestId = UUID.randomUUID().toString();
 
         if (!todoService.existsById(id)) {
-            ErrorResponse error = new ErrorResponse(
-                    "https://api.example.com/problems/not-found",
-                    "Not Found",
-                    404,
-                    "Todo with id " + id + " not found.",
-                    null,
-                    requestId
-            );
+            ErrorResponse error = ErrorResponse.builder()
+                    .type("about:blank")
+                    .title("Not Found")
+                    .status(404)
+                    .detail("Todo with id " + id + " not found.")
+                    .instance("/todos/" + id + "/complete")
+                    .requestId(requestId)
+                    .build();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
 
         if (todoService.isCompleted(id)) {
-            ErrorResponse error = new ErrorResponse(
-                    "https://api.example.com/problems/conflict",
-                    "Conflict",
-                    409,
-                    "Todo with id " + id + " is already completed.",
-                    null,
-                    requestId
-            );
+            ErrorResponse error = ErrorResponse.builder()
+                    .type("about:blank")
+                    .title("Conflict")
+                    .status(409)
+                    .detail("Todo with id " + id + " is already completed.")
+                    .instance("/todos/" + id + "/complete")
+                    .requestId(requestId)
+                    .build();
             return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
         }
 
@@ -205,14 +205,14 @@ public class TodoController {
         String requestId = UUID.randomUUID().toString();
 
         if (!todoService.existsById(id)) {
-            ErrorResponse error = new ErrorResponse(
-                    "https://api.example.com/problems/not-found",
-                    "Not Found",
-                    404,
-                    "Todo with id " + id + " not found.",
-                    null,
-                    requestId
-            );
+            ErrorResponse error = ErrorResponse.builder()
+                    .type("about:blank")
+                    .title("Not Found")
+                    .status(404)
+                    .detail("Todo with id " + id + " not found.")
+                    .instance("/todos/" + id)
+                    .requestId(requestId)
+                    .build();
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
 

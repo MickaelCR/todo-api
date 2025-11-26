@@ -21,6 +21,7 @@ public class ErrorResponse {
     private String title;
     private int status;
     private String detail;
+    private String instance;
     private Map<String, Object> errors;
     private String requestId;
 }
