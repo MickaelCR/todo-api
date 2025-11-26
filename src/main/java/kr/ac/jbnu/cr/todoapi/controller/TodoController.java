@@ -1,14 +1,17 @@
 package kr.ac.jbnu.cr.todoapi.controller;
 
+import jakarta.validation.Valid;
+import kr.ac.jbnu.cr.todoapi.dto.request.CreateTodoRequest;
+import kr.ac.jbnu.cr.todoapi.dto.request.UpdateTodoRequest;
 import kr.ac.jbnu.cr.todoapi.dto.response.ApiResponse;
+import kr.ac.jbnu.cr.todoapi.dto.response.ErrorResponse;
 import kr.ac.jbnu.cr.todoapi.model.Todo;
 import kr.ac.jbnu.cr.todoapi.service.TodoService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +27,8 @@ public class TodoController {
     public TodoController(TodoService todoService) {
         this.todoService = todoService;
     }
+
+    // ========== GET ENDPOINTS ==========
 
     /**
      * GET /todos
@@ -66,5 +71,145 @@ public class TodoController {
         links.put("self", "/todos/" + id);
 
         return ResponseEntity.ok(ApiResponse.success(todo, requestId, links));
+    }
+
+    // ========== POST ENDPOINTS ==========
+
+    /**
+     * POST /todos
+     * Create a new todo
+     *
+     * @param request the creation request
+     * @return 201 Created with the new todo
+     */
+    @PostMapping
+    public ResponseEntity<ApiResponse<Todo>> createTodo(@Valid @RequestBody CreateTodoRequest request) {
+        String requestId = UUID.randomUUID().toString();
+
+        Todo createdTodo = todoService.create(request);
+
+        Map<String, String> links = new HashMap<>();
+        links.put("self", "/todos/" + createdTodo.getId());
+
+        URI location = URI.create("/todos/" + createdTodo.getId());
+
+        return ResponseEntity
+                .created(location)
+                .body(ApiResponse.success(createdTodo, requestId, links));
+    }
+
+    /**
+     * POST /todos/batch
+     * Create multiple todos at once
+     *
+     * @param requests list of creation requests
+     * @return 201 Created with list of new todos, or 400 Bad Request if list is empty
+     */
+    @PostMapping("/batch")
+    public ResponseEntity<?> createTodosBatch(@Valid @RequestBody List<CreateTodoRequest> requests) {
+        String requestId = UUID.randomUUID().toString();
+
+        // Validate: list must not be empty
+        if (requests == null || requests.isEmpty()) {
+            ErrorResponse error = new ErrorResponse(
+                    "https://api.example.com/problems/validation-error",
+                    "Invalid Request",
+                    400,
+                    "Request body must contain at least one todo.",
+                    null,
+                    requestId
+            );
+            return ResponseEntity.badRequest().body(error);
+        }
+
+        List<Todo> createdTodos = todoService.createBatch(requests);
+
+        Map<String, String> links = new HashMap<>();
+        links.put("self", "/todos/batch");
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(createdTodos, requestId, links));
+    }
+
+
+    // ========== PUT ENDPOINTS ==========
+
+    /**
+     * PUT /todos/{id}
+     * Update a todo (full replacement)
+     *
+     * @param id the todo ID
+     * @param request the update request
+     * @return 200 OK with updated todo, or 404 Not Found
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateTodo(@PathVariable Long id,
+                                        @Valid @RequestBody UpdateTodoRequest request) {
+        String requestId = UUID.randomUUID().toString();
+
+        if (!todoService.existsById(id)) {
+            ErrorResponse error = new ErrorResponse(
+                    "https://api.example.com/problems/not-found",
+                    "Not Found",
+                    404,
+                    "Todo with id " + id + " not found.",
+                    null,
+                    requestId
+            );
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
+
+        Optional<Todo> updatedTodo = todoService.update(id, request);
+
+        Map<String, String> links = new HashMap<>();
+        links.put("self", "/todos/" + id);
+
+        return ResponseEntity.ok(ApiResponse.success(updatedTodo.get(), requestId, links));
+    }
+
+    /**
+     * PUT /todos/{id}/complete
+     * Mark a todo as completed
+     *
+     * @param id the todo ID
+     * @return 200 OK with completed todo, 404 Not Found, or 409 Conflict if already completed
+     */
+    @PutMapping("/{id}/complete")
+    public ResponseEntity<?> completeTodo(@PathVariable Long id) {
+        String requestId = UUID.randomUUID().toString();
+
+        // Check if todo exists
+        if (!todoService.existsById(id)) {
+            ErrorResponse error = new ErrorResponse(
+                    "https://api.example.com/problems/not-found",
+                    "Not Found",
+                    404,
+                    "Todo with id " + id + " not found.",
+                    null,
+                    requestId
+            );
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
+
+        // Check if already completed (409 Conflict)
+        if (todoService.isCompleted(id)) {
+            ErrorResponse error = new ErrorResponse(
+                    "https://api.example.com/problems/conflict",
+                    "Conflict",
+                    409,
+                    "Todo with id " + id + " is already completed.",
+                    null,
+                    requestId
+            );
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        }
+
+        Optional<Todo> completedTodo = todoService.complete(id);
+
+        Map<String, String> links = new HashMap<>();
+        links.put("self", "/todos/" + id);
+
+        return ResponseEntity.ok(ApiResponse.success(completedTodo.get(), requestId, links));
     }
 }
