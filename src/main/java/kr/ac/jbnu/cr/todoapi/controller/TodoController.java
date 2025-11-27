@@ -1,5 +1,11 @@
 package kr.ac.jbnu.cr.todoapi.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.ac.jbnu.cr.todoapi.dto.request.CreateTodoRequest;
 import kr.ac.jbnu.cr.todoapi.dto.request.UpdateTodoRequest;
@@ -9,14 +15,7 @@ import kr.ac.jbnu.cr.todoapi.model.Todo;
 import kr.ac.jbnu.cr.todoapi.service.TodoService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -27,6 +26,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/todos")
+@Tag(name = "Todo", description = "Todo management APIs")
 public class TodoController {
 
     private final TodoService todoService;
@@ -37,10 +37,8 @@ public class TodoController {
 
     // ========== GET ENDPOINTS ==========
 
-    /**
-     * GET /todos
-     * Retrieve all todos
-     */
+    @Operation(summary = "Get all todos", description = "Retrieve a list of all todos")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Successfully retrieved all todos")
     @GetMapping
     public ResponseEntity<ApiResponse<List<Todo>>> getAllTodos() {
         String requestId = UUID.randomUUID().toString();
@@ -52,12 +50,15 @@ public class TodoController {
         return ResponseEntity.ok(ApiResponse.success(todos, requestId, links));
     }
 
-    /**
-     * GET /todos/{id}
-     * Retrieve a single todo by ID
-     */
+    @Operation(summary = "Get todo by ID", description = "Retrieve a single todo by its ID")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Successfully retrieved the todo"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Todo not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Todo>> getTodoById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Todo>> getTodoById(
+            @Parameter(description = "ID of the todo to retrieve") @PathVariable Long id) {
         String requestId = UUID.randomUUID().toString();
         Optional<Todo> todoOptional = todoService.findById(id);
 
@@ -74,10 +75,12 @@ public class TodoController {
 
     // ========== POST ENDPOINTS ==========
 
-    /**
-     * POST /todos
-     * Create a new todo
-     */
+    @Operation(summary = "Create a new todo", description = "Create a new todo item")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Todo created successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request body",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping
     public ResponseEntity<ApiResponse<Todo>> createTodo(@Valid @RequestBody CreateTodoRequest request) {
         String requestId = UUID.randomUUID().toString();
@@ -93,10 +96,12 @@ public class TodoController {
                 .body(ApiResponse.success(createdTodo, requestId, links));
     }
 
-    /**
-     * POST /todos/batch
-     * Create multiple todos at once
-     */
+    @Operation(summary = "Create multiple todos", description = "Create multiple todo items at once")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Todos created successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request body",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/batch")
     public ResponseEntity<?> createTodosBatch(@Valid @RequestBody List<CreateTodoRequest> requests) {
         String requestId = UUID.randomUUID().toString();
@@ -125,13 +130,18 @@ public class TodoController {
 
     // ========== PUT ENDPOINTS ==========
 
-    /**
-     * PUT /todos/{id}
-     * Update a todo (full replacement)
-     */
+    @Operation(summary = "Update a todo", description = "Update an existing todo by its ID")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Todo updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request body",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Todo not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateTodo(@PathVariable Long id,
-                                        @Valid @RequestBody UpdateTodoRequest request) {
+    public ResponseEntity<?> updateTodo(
+            @Parameter(description = "ID of the todo to update") @PathVariable Long id,
+            @Valid @RequestBody UpdateTodoRequest request) {
         String requestId = UUID.randomUUID().toString();
 
         if (!todoService.existsById(id)) {
@@ -154,12 +164,17 @@ public class TodoController {
         return ResponseEntity.ok(ApiResponse.success(updatedTodo.get(), requestId, links));
     }
 
-    /**
-     * PUT /todos/{id}/complete
-     * Mark a todo as completed
-     */
+    @Operation(summary = "Mark todo as completed", description = "Mark a todo as completed by its ID")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Todo marked as completed"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Todo not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Todo already completed",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PutMapping("/{id}/complete")
-    public ResponseEntity<?> completeTodo(@PathVariable Long id) {
+    public ResponseEntity<?> completeTodo(
+            @Parameter(description = "ID of the todo to complete") @PathVariable Long id) {
         String requestId = UUID.randomUUID().toString();
 
         if (!todoService.existsById(id)) {
@@ -196,12 +211,15 @@ public class TodoController {
 
     // ========== DELETE ENDPOINTS ==========
 
-    /**
-     * DELETE /todos/{id}
-     * Delete a todo by ID
-     */
+    @Operation(summary = "Delete a todo", description = "Delete a todo by its ID")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "Todo deleted successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Todo not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteTodo(@PathVariable Long id) {
+    public ResponseEntity<?> deleteTodo(
+            @Parameter(description = "ID of the todo to delete") @PathVariable Long id) {
         String requestId = UUID.randomUUID().toString();
 
         if (!todoService.existsById(id)) {
@@ -221,10 +239,8 @@ public class TodoController {
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * DELETE /todos/completed
-     * Delete all completed todos
-     */
+    @Operation(summary = "Delete all completed todos", description = "Delete all todos that are marked as completed")
+    @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Completed todos deleted successfully")
     @DeleteMapping("/completed")
     public ResponseEntity<ApiResponse<Map<String, Object>>> deleteCompletedTodos() {
         String requestId = UUID.randomUUID().toString();

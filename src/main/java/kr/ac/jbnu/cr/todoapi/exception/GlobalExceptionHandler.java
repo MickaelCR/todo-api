@@ -5,6 +5,7 @@ import kr.ac.jbnu.cr.todoapi.dto.response.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -25,6 +26,7 @@ import java.util.UUID;
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final MediaType PROBLEM_JSON = MediaType.parseMediaType("application/problem+json");
 
     /**
      * Handle 404 Not Found - Todo not found
@@ -45,7 +47,10 @@ public class GlobalExceptionHandler {
                 .requestId(requestId)
                 .build();
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .contentType(PROBLEM_JSON)
+                .body(error);
     }
 
     /**
@@ -67,7 +72,10 @@ public class GlobalExceptionHandler {
                 .requestId(requestId)
                 .build();
 
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .contentType(PROBLEM_JSON)
+                .body(error);
     }
 
     /**
@@ -95,7 +103,10 @@ public class GlobalExceptionHandler {
                 .requestId(requestId)
                 .build();
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .contentType(PROBLEM_JSON)
+                .body(error);
     }
 
     /**
@@ -117,7 +128,10 @@ public class GlobalExceptionHandler {
                 .requestId(requestId)
                 .build();
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .contentType(PROBLEM_JSON)
+                .body(error);
     }
 
     /**
@@ -139,7 +153,10 @@ public class GlobalExceptionHandler {
                 .requestId(requestId)
                 .build();
 
-        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(error);
+        return ResponseEntity
+                .status(HttpStatus.METHOD_NOT_ALLOWED)
+                .contentType(PROBLEM_JSON)
+                .body(error);
     }
 
     /**
@@ -160,7 +177,10 @@ public class GlobalExceptionHandler {
                 .requestId(requestId)
                 .build();
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .contentType(PROBLEM_JSON)
+                .body(error);
     }
 
     /**
@@ -182,6 +202,9 @@ public class GlobalExceptionHandler {
                 .requestId(requestId)
                 .build();
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .contentType(PROBLEM_JSON)
+                .body(error);
     }
 }
